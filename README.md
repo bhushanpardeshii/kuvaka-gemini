@@ -1,8 +1,8 @@
 # Gemini Chat Clone 
 screenshots
-<img width="1127" height="636" alt="geminisearch" src="https://github.com/user-attachments/assets/8e618301-c289-4cfb-85f3-0761d15c285d" />
-<img width="1348" height="634" alt="geminilight" src="https://github.com/user-attachments/assets/c0cb0413-a95b-40a4-9b5a-7562ad11c180" />
-<img width="1360" height="639" alt="otp" src="https://github.com/user-attachments/assets/a51a88a6-9f83-4f51-a3a1-6272d4552cee" />
+<img width="1000" height="550" alt="geminisearch" src="https://github.com/user-attachments/assets/8e618301-c289-4cfb-85f3-0761d15c285d" />
+<img width="1000" height="550" alt="geminilight" src="https://github.com/user-attachments/assets/c0cb0413-a95b-40a4-9b5a-7562ad11c180" />
+<img width="1000" height="550" alt="otp" src="https://github.com/user-attachments/assets/a51a88a6-9f83-4f51-a3a1-6272d4552cee" />
  Prerequisites
 - Node.js  
 - npm or yarn
@@ -50,10 +50,10 @@ lib/                         # Utilities and configurations
 ```
 
  OTP auth system:
- -Country Selection - Fetches country data from given api
- -Phone Verification - Validates phone numbers with React Hook Form + Zod
- -OTP Simulation - Simulates OTP sending with setTimeout (use "123456" for testing)
- -Data Persistence - Auth data saved to localStorage
+ #Country Selection - Fetches country data from given api
+ #Phone Verification - Validates phone numbers with React Hook Form + Zod
+ #OTP Simulation - Simulates OTP sending with setTimeout (use "123456" for testing)
+ #Data Persistence - Auth data saved to localStorage
 
 
 
