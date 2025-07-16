@@ -147,7 +147,7 @@ export default function MessageList() {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl font-bold">G</span>
             </div>
-            <h2 className="text-5xl font-light text-foreground mb-2">Hello, Bhushan</h2>
+            <h2 className="text-5xl font-light text-foreground mb-2">Hello, User</h2>
             <p className="text-lg text-muted-foreground">How can I help you today?</p>
           </div>
         </div>

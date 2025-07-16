@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import { createChatroom, initializeDefaultChatroom } from '@/lib/slices/chatSlice';
+import { createChatroom, initializeDefaultChatroom, loadChatData } from '@/lib/slices/chatSlice';
 import { toast } from 'sonner';
 import ChatroomList from './ChatroomList';
 import ThemeToggle from './ThemeToggle';
-import { X, Menu, Settings, PenTool } from 'lucide-react';
+import { X, Menu, Settings, PenTool, LogOut } from 'lucide-react';
+import { getChatData, clearAuthData, getAuthData } from '@/lib/localStorage';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -15,16 +17,36 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { chatrooms, activeChatroomId } = useAppSelector(state => state.chat);
+  const [authData, setAuthData] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
 
-  // Initialize default chatroom on mount
+  // Set client flag on mount
   useEffect(() => {
-    dispatch(initializeDefaultChatroom());
+    setIsClient(true);
+    setAuthData(getAuthData());
+  }, []);
+
+  // Load chat data from localStorage on mount
+  useEffect(() => {
+    const savedChatData = getChatData();
+    if (savedChatData && savedChatData.chatrooms) {
+      dispatch(loadChatData(savedChatData.chatrooms));
+    } else {
+      dispatch(initializeDefaultChatroom());
+    }
   }, [dispatch]);
 
   const handleNewChat = () => {
     dispatch(createChatroom({}));
     toast.success('New chat created!');
+  };
+
+  const handleLogout = () => {
+    clearAuthData();
+    toast.success('Logged out successfully!');
+    router.push('/signup');
   };
 
   return (
@@ -57,6 +79,13 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           {/* Theme Toggle */}
           <ThemeToggle />
         </div>
+        
+        {/* User info - only render on client */}
+        {isClient && authData && (
+          <div className="text-sm text-muted-foreground">
+            <div>+{authData.countryCode} {authData.phone}</div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -75,11 +104,19 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         <ChatroomList onChatroomSelect={onClose} />
       </div>
 
-      {/* Settings */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* Settings & Logout */}
+      <div className="p-4 border-t border-sidebar-border space-y-2">
         <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-sidebar-accent rounded-lg transition-colors">
           <Settings className="w-5 h-5" />
           <span className="text-sm">Settings & help</span>
+        </button>
+        
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 p-3 text-left hover:bg-sidebar-accent rounded-lg transition-colors text-red-500 hover:text-red-400"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm">Logout</span>
         </button>
       </div>
     </div>

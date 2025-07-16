@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { addMessage, setTyping } from '@/lib/slices/chatSlice';
 import Image from 'next/image';
 import { Plus, Image as ImageIcon, Send, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function MessageInput() {
   const dispatch = useAppDispatch();
@@ -41,6 +42,17 @@ export default function MessageInput() {
       chatroomId: activeChatroomId || '',
     }));
 
+    // Show message sent toast
+    if (inputValue.trim()) {
+      toast.success('Message sent!', {
+        description: 'Gemini is typing a response...',
+      });
+    } else if (selectedImage) {
+      toast.success('Image shared!', {
+        description: 'Gemini is analyzing your image...',
+      });
+    }
+
     // Clear input
     setInputValue('');
     setSelectedImage(null);
@@ -64,6 +76,11 @@ export default function MessageInput() {
         chatroomId: activeChatroomId || '', 
         isTyping: false 
       }));
+      
+      // Show AI response toast
+      toast.info('Gemini replied!', {
+        description: 'Check the chat for the response',
+      });
     }, delay);
   };
 
@@ -72,13 +89,26 @@ export default function MessageInput() {
     if (file) {
       // Check file type
       if (!file.type.startsWith('image/')) {
-        alert('Please upload an image file');
+        toast.error('Invalid file type', {
+          description: 'Please upload an image file',
+        });
+        return;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File too large', {
+          description: 'Please upload an image smaller than 5MB',
+        });
         return;
       }
 
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target?.result as string);
+        toast.success('Image selected!', {
+          description: 'Click send to share with Gemini',
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -89,6 +119,9 @@ export default function MessageInput() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    toast.info('Image removed', {
+      description: 'Image has been removed from the message',
+    });
   };
 
   return (
@@ -109,7 +142,7 @@ export default function MessageInput() {
               onClick={removeImage}
               className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center hover:bg-destructive/90 transition-colors"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -150,7 +183,6 @@ export default function MessageInput() {
               >
                 <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </button>
-
 
               {/* Send button */}
               <button

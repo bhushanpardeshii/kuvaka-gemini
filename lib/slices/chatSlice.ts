@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
+import { saveChatData } from '../localStorage';
 
 export interface Message {
   id: string;
   content: string;
   isUser: boolean;
-  timestamp: string; // Store as ISO string instead of Date object
+  timestamp: string; 
   image?: string;
 }
 
@@ -50,6 +51,9 @@ const chatSlice = createSlice({
       
       state.chatrooms.push(newChatroom);
       state.activeChatroomId = newChatroom.id;
+      
+      // Save to localStorage
+      saveChatData(state.chatrooms);
     },
     
     deleteChatroom: (state, action: PayloadAction<string>) => {
@@ -60,10 +64,16 @@ const chatSlice = createSlice({
       if (state.activeChatroomId === chatroomId) {
         state.activeChatroomId = state.chatrooms.length > 0 ? state.chatrooms[0].id : null;
       }
+      
+      // Save to localStorage
+      saveChatData(state.chatrooms);
     },
     
     setActiveChatroom: (state, action: PayloadAction<string>) => {
       state.activeChatroomId = action.payload;
+      
+      // Save to localStorage
+      saveChatData(state.chatrooms);
     },
     
     addMessage: (state, action: PayloadAction<Omit<Message, 'id' | 'timestamp'> & { chatroomId?: string }>) => {
@@ -82,6 +92,9 @@ const chatSlice = createSlice({
         chatroom.messages.push(newMessage);
         chatroom.totalMessages = chatroom.messages.length;
         chatroom.lastActivity = new Date().toISOString();
+        
+        // Save to localStorage
+        saveChatData(state.chatrooms);
       }
     },
     
@@ -91,6 +104,9 @@ const chatSlice = createSlice({
       
       if (chatroom) {
         chatroom.isTyping = action.payload.isTyping;
+        
+        // Save to localStorage
+        saveChatData(state.chatrooms);
       }
     },
     
@@ -107,6 +123,9 @@ const chatSlice = createSlice({
         if (chatroom.currentPage >= 5) {
           chatroom.hasMoreMessages = false;
         }
+        
+        // Save to localStorage
+        saveChatData(state.chatrooms);
       }
     },
     
@@ -118,6 +137,9 @@ const chatSlice = createSlice({
         chatroom.hasMoreMessages = true;
         chatroom.totalMessages = 0;
         chatroom.lastActivity = new Date().toISOString();
+        
+        // Save to localStorage
+        saveChatData(state.chatrooms);
       }
     },
     
@@ -148,6 +170,9 @@ const chatSlice = createSlice({
         chatroom.messages = dummyMessages;
         chatroom.totalMessages = dummyMessages.length;
         chatroom.lastActivity = new Date().toISOString();
+        
+        // Save to localStorage
+        saveChatData(state.chatrooms);
       }
     },
     
@@ -166,6 +191,17 @@ const chatSlice = createSlice({
         
         state.chatrooms.push(defaultChatroom);
         state.activeChatroomId = defaultChatroom.id;
+        
+        // Save to localStorage
+        saveChatData(state.chatrooms);
+      }
+    },
+    
+    // Load chat data from localStorage
+    loadChatData: (state, action: PayloadAction<Chatroom[]>) => {
+      state.chatrooms = action.payload;
+      if (action.payload.length > 0) {
+        state.activeChatroomId = action.payload[0].id;
       }
     },
   },
@@ -180,7 +216,8 @@ export const {
   loadOlderMessages, 
   clearChatroomMessages, 
   initializeWithDummyMessages,
-  initializeDefaultChatroom
+  initializeDefaultChatroom,
+  loadChatData
 } = chatSlice.actions;
 
 export default chatSlice.reducer; 
