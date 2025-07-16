@@ -1,4 +1,7 @@
 # Gemini Chat Clone 
+Live Link
+https://kuvaka-gemini-delta.vercel.app
+
 screenshots
 <img width="1000" height="550" alt="geminisearch" src="https://github.com/user-attachments/assets/8e618301-c289-4cfb-85f3-0761d15c285d" />
 <img width="1000" height="550" alt="geminilight" src="https://github.com/user-attachments/assets/c0cb0413-a95b-40a4-9b5a-7562ad11c180" />
