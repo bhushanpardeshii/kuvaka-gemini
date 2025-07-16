@@ -22,6 +22,7 @@ npm run build
 npm start
 
 project structure:
+```
 geminichat/
 app/                         
     chat/                     # Main chat interface
@@ -46,7 +47,7 @@ lib/                         # Utilities and configurations
     theme-context.tsx        # Theme management
  public/                      # Static assets
 
-
+```
 
  OTP auth system:
  Country Selection - Fetches country data from given api
