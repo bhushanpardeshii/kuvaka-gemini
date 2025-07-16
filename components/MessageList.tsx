@@ -6,6 +6,8 @@ import { loadOlderMessages } from '@/lib/slices/chatSlice';
 import { Message } from '@/lib/slices/chatSlice';
 import { v4 as uuidv4 } from 'uuid';
 import MessageItem from './MessageItem';
+import MessageSkeleton from './MessageSkeleton';
+
 
 export default function MessageList() {
   const dispatch = useAppDispatch();
@@ -20,6 +22,15 @@ export default function MessageList() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // Simulate initial loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -65,6 +76,13 @@ export default function MessageList() {
     }
   };
 
+  // Generate skeleton messages for initial loading
+  const generateSkeletonMessages = () => {
+    return Array.from({ length: 5 }, (_, index) => (
+      <MessageSkeleton key={index} isUser={index % 2 === 0} />
+    ));
+  };
+
   return (
     <div 
       ref={messagesContainerRef}
@@ -74,23 +92,32 @@ export default function MessageList() {
       {/* Loading indicator for older messages */}
       {isLoadingMore && (
         <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
       )}
 
       {/* No more messages indicator */}
       {!hasMoreMessages && messages.length > 0 && (
         <div className="text-center py-4">
-          <span className="text-gray-500 text-sm">No more messages</span>
+          <span className="text-muted-foreground text-sm">No more messages</span>
+        </div>
+      )}
+
+      {/* Initial loading skeletons */}
+      {isInitialLoading && (
+        <div className="space-y-3 sm:space-y-4">
+          {generateSkeletonMessages()}
         </div>
       )}
 
       {/* Messages */}
-      <div className="space-y-3 sm:space-y-4">
-        {messages.map((message) => (
-          <MessageItem key={message.id} message={message} />
-        ))}
-      </div>
+      {!isInitialLoading && (
+        <div className="space-y-3 sm:space-y-4">
+          {messages.map((message) => (
+            <MessageItem key={message.id} message={message} />
+          ))}
+        </div>
+      )}
 
       {/* Typing indicator */}
       {isTyping && (
@@ -99,12 +126,12 @@ export default function MessageList() {
             <span className="text-xs font-bold text-white">G</span>
           </div>
           <div className="w-full sm:w-auto">
-            <div className="bg-[#2a2a2a] rounded-2xl rounded-bl-sm sm:rounded-bl-sm p-3 sm:p-4 border border-[#3a3a3a] inline-block">
-              <div className="flex items-center gap-2 text-gray-400">
+            <div className="bg-card rounded-2xl rounded-bl-sm sm:rounded-bl-sm p-3 sm:p-4 border border-border inline-block">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
                 <span className="text-sm">Gemini is typing...</span>
               </div>
@@ -114,14 +141,14 @@ export default function MessageList() {
       )}
 
       {/* Empty state */}
-      {messages.length === 0 && !isTyping && (
+      {!isInitialLoading && messages.length === 0 && !isTyping && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl font-bold">G</span>
             </div>
-            <h2 className="text-5xl font-light text-gray-100 mb-2">Hello, Bhushan</h2>
-            <p className="text-lg text-gray-400">How can I help you today?</p>
+            <h2 className="text-5xl font-light text-foreground mb-2">Hello, Bhushan</h2>
+            <p className="text-lg text-muted-foreground">How can I help you today?</p>
           </div>
         </div>
       )}

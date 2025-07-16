@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { 
   createChatroom, 
@@ -10,12 +10,49 @@ import {
   clearChatroomMessages 
 } from '@/lib/slices/chatSlice';
 import { toast } from 'sonner';
+import ChatroomSkeleton from './ChatroomSkeleton';
+import { Plus, Search, X, MessageCircle, Trash2 } from 'lucide-react';
 
-export default function ChatroomList() {
+interface ChatroomListProps {
+  onChatroomSelect?: () => void;
+}
+
+export default function ChatroomList({ onChatroomSelect }: ChatroomListProps) {
   const dispatch = useAppDispatch();
   const { chatrooms, activeChatroomId } = useAppSelector(state => state.chat);
   const [isCreating, setIsCreating] = useState(false);
   const [newChatroomName, setNewChatroomName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter chatrooms based on search query
+  const filteredChatrooms = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return chatrooms;
+    }
+    
+    return chatrooms.filter(chatroom =>
+      chatroom.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
+  }, [chatrooms, debouncedSearchQuery]);
 
   const handleCreateChatroom = () => {
     if (isCreating) {
@@ -58,6 +95,8 @@ export default function ChatroomList() {
         toast.info(`Switched to "${chatroom.name}"`);
       }
     }
+    // Close mobile sidebar when chatroom is selected
+    onChatroomSelect?.();
   };
 
   const handleLoadSampleChat = (chatroomId: string) => {
@@ -65,13 +104,6 @@ export default function ChatroomList() {
     toast.success('Sample conversation loaded!');
   };
 
-  const handleClearChat = (chatroomId: string, chatroomName: string) => {
-    const confirmClear = window.confirm(`Are you sure you want to clear all messages in "${chatroomName}"?`);
-    if (confirmClear) {
-      dispatch(clearChatroomMessages(chatroomId));
-      toast.success(`Messages cleared from "${chatroomName}"`);
-    }
-  };
 
   const formatLastActivity = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -85,30 +117,61 @@ export default function ChatroomList() {
     return date.toLocaleDateString();
   };
 
+  // Generate skeleton chatrooms
+  const generateSkeletonChatrooms = () => {
+    return Array.from({ length: 4 }, (_, index) => (
+      <ChatroomSkeleton key={index} />
+    ));
+  };
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Chatrooms</h3>
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Chatrooms</h3>
         <button
           onClick={handleCreateChatroom}
-          className="p-1 hover:bg-[#3a3a3a] rounded text-gray-400 hover:text-white transition-colors"
+          className="p-1 hover:bg-sidebar-accent rounded text-muted-foreground hover:text-foreground transition-colors"
           title="Create new chatroom"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-4 h-4" />
         </button>
+      </div>
+
+      {/* Search bar */}
+      <div className="mb-3">
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chatrooms..."
+            className="w-full bg-sidebar-accent text-foreground text-sm outline-none rounded-lg px-3 py-2 pr-8 placeholder-muted-foreground"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+          {!searchQuery && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              <Search className="w-3 h-3" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Create new chatroom input */}
       {isCreating && (
-        <div className="mb-2 p-2 bg-[#3a3a3a] rounded-lg">
+        <div className="mb-2 p-2 bg-sidebar-accent rounded-lg">
           <input
             type="text"
             value={newChatroomName}
             onChange={(e) => setNewChatroomName(e.target.value)}
             placeholder="Enter chatroom name..."
-            className="w-full bg-transparent text-white text-sm outline-none mb-2"
+            className="w-full bg-transparent text-foreground text-sm outline-none mb-2"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCreateChatroom();
@@ -118,13 +181,13 @@ export default function ChatroomList() {
           <div className="flex gap-2">
             <button
               onClick={handleCreateChatroom}
-              className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+              className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded hover:bg-primary/90 transition-colors"
             >
               Create
             </button>
             <button
               onClick={handleCancelCreate}
-              className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
+              className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded hover:bg-secondary/90 transition-colors"
             >
               Cancel
             </button>
@@ -132,82 +195,92 @@ export default function ChatroomList() {
         </div>
       )}
 
+      {/* Search results info */}
+      {debouncedSearchQuery && (
+        <div className="mb-2 text-xs text-muted-foreground">
+          {filteredChatrooms.length === 0 ? (
+            <span>No chatrooms found for "{debouncedSearchQuery}"</span>
+          ) : (
+            <span>{filteredChatrooms.length} chatroom{filteredChatrooms.length !== 1 ? 's' : ''} found</span>
+          )}
+        </div>
+      )}
+
+      {/* Loading skeletons */}
+      {isLoading && (
+        <div className="space-y-1">
+          {generateSkeletonChatrooms()}
+        </div>
+      )}
+
       {/* Chatroom list */}
-      <div className="space-y-1">
-        {chatrooms.map((chatroom) => (
-          <div
-            key={chatroom.id}
-            className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
-              chatroom.id === activeChatroomId 
-                ? 'bg-[#4a4a4a] text-white' 
-                : 'hover:bg-[#3a3a3a] text-gray-300 hover:text-white'
-            }`}
-            onClick={() => handleSelectChatroom(chatroom.id)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{chatroom.name}</div>
-                <div className="text-xs text-gray-500 flex items-center gap-2">
-                  <span>{chatroom.totalMessages} messages</span>
-                  <span>•</span>
-                  <span>{formatLastActivity(chatroom.lastActivity)}</span>
+      {!isLoading && (
+        <div className="space-y-1">
+          {filteredChatrooms.map((chatroom) => (
+            <div
+              key={chatroom.id}
+              className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
+                chatroom.id === activeChatroomId 
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground' 
+                  : 'hover:bg-sidebar-accent text-sidebar-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleSelectChatroom(chatroom.id)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{chatroom.name}</div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span>{chatroom.totalMessages} messages</span>
+                    <span>•</span>
+                    <span>{formatLastActivity(chatroom.lastActivity)}</span>
+                  </div>
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex items-center gap-1 ">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLoadSampleChat(chatroom.id);
+                    }}
+                    className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
+                    title="Load sample conversation"
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteChatroom(chatroom.id, chatroom.name);
+                    }}
+                    className="p-1 hover:bg-destructive rounded text-muted-foreground hover:text-destructive-foreground transition-colors"
+                    title="Delete chatroom"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
-              
-              {/* Action buttons */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLoadSampleChat(chatroom.id);
-                  }}
-                  className="p-1 hover:bg-[#5a5a5a] rounded text-gray-400 hover:text-white transition-colors"
-                  title="Load sample conversation"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.477 8-10 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.477-8 10-8s10 3.582 10 8z" />
-                  </svg>
-                </button>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClearChat(chatroom.id, chatroom.name);
-                  }}
-                  className="p-1 hover:bg-[#5a5a5a] rounded text-gray-400 hover:text-white transition-colors"
-                  title="Clear messages"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteChatroom(chatroom.id, chatroom.name);
-                  }}
-                  className="p-1 hover:bg-red-600 rounded text-gray-400 hover:text-white transition-colors"
-                  title="Delete chatroom"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Empty state */}
-      {chatrooms.length === 0 && (
-        <div className="text-center py-6 text-gray-500">
-          <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.477 8-10 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.477-8 10-8s10 3.582 10 8z" />
-          </svg>
+      {!isLoading && chatrooms.length === 0 && (
+        <div className="text-center py-6 text-muted-foreground">
+          <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No chatrooms yet</p>
           <p className="text-xs">Click + to create your first chatroom</p>
+        </div>
+      )}
+
+      {/* No search results state */}
+      {!isLoading && debouncedSearchQuery && filteredChatrooms.length === 0 && chatrooms.length > 0 && (
+        <div className="text-center py-6 text-muted-foreground">
+          <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">No chatrooms found</p>
+          <p className="text-xs">Try a different search term</p>
         </div>
       )}
     </div>
