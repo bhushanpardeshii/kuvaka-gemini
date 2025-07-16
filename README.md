@@ -50,10 +50,10 @@ lib/                         # Utilities and configurations
 ```
 
  OTP auth system:
- Country Selection - Fetches country data from given api
- Phone Verification - Validates phone numbers with React Hook Form + Zod
- OTP Simulation - Simulates OTP sending with setTimeout (use "123456" for testing)
- Data Persistence - Auth data saved to localStorage
+ -Country Selection - Fetches country data from given api
+ -Phone Verification - Validates phone numbers with React Hook Form + Zod
+ -OTP Simulation - Simulates OTP sending with setTimeout (use "123456" for testing)
+ -Data Persistence - Auth data saved to localStorage
 
 
 
